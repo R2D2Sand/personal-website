@@ -30,7 +30,7 @@ export default async function PostPage({
         <h1 className="text-4xl font-bold mt-2 mb-4">{post.title}</h1>
 
         <div className="flex gap-2 mb-8">
-          {post.tags.map((tag) => (
+          {post.tags.map((tag: string) => (
             <span
               key={tag}
               className="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded-full"
