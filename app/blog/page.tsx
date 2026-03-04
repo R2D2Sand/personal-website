@@ -26,7 +26,7 @@ export default function BlogPage() {
               <p className="text-sm text-gray-500 mb-1">{formatDate(post.date)}</p>
               <h2 className="text-xl font-semibold mb-2">{post.title}</h2>
               <div className="flex gap-2">
-                {post.tags.map((tag) => (
+                {post.tags.map((tag: string) => (
                   <span
                     key={tag}
                     className="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded-full"
