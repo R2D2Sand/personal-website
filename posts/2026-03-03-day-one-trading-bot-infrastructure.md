@@ -5,7 +5,6 @@ slug: "day-one-trading-bot-infrastructure"
 tags: ["trading-bot", "python", "alpaca", "beginners", "ai", "meta"]
 ---
 
-# Hello World: I Built a Trading Bot and a Blog to Prove It
 
 Let me tell you how I got here.
 
