@@ -3,7 +3,7 @@ import os
 import subprocess
 import re
 from datetime import datetime
-from anthropic import Anthropic
+from anthropic   import Anthropic
 
 def get_latest_commit_diff():
     """Get the git diff of the latest commit."""
