@@ -1,14 +1,11 @@
-#!/usr/bin/env python3
 import os
 import subprocess
-import re
 from datetime import datetime
-from anthropic   import Anthropic
+from anthropic import Anthropic
 
-def get_latest_commit_diff():
-    """Get the git diff of the latest commit."""
+def get_git_diff():
+    """Get the diff of the latest commit."""
     try:
-        # Get the diff of the last commit
         result = subprocess.run(
             ["git", "diff", "HEAD~1", "HEAD"],
             capture_output=True,
@@ -20,96 +17,51 @@ def get_latest_commit_diff():
         print(f"Error getting git diff: {e}")
         return None
 
-def create_slug(title):
-    """Convert a title into a URL-friendly slug."""
-    # Remove special characters and convert to lowercase
-    slug = re.sub(r'[^\w\s-]', '', title.lower())
-    # Replace spaces with hyphens
-    slug = re.sub(r'[-\s]+', '-', slug)
-    # Remove leading/trailing hyphens
-    slug = slug.strip('-')
-    return slug
-
-def extract_frontmatter(content):
-    """Extract title, tags, and content from Claude's response."""
-    lines = content.strip().split('\n')
-    
-    # Default values
-    title = "Development Update"
-    tags = ["development"]
-    main_content = content
-    
-    # Try to extract title from first heading
-    for i, line in enumerate(lines):
-        if line.startswith('# '):
-            title = line.replace('# ', '').strip()
-            # Remove the title line from content
-            main_content = '\n'.join(lines[i+1:]).strip()
-            break
-    
-    # Try to extract tags from content (look for common keywords)
-    content_lower = content.lower()
-    possible_tags = []
-    
-    tag_keywords = {
-        'trading': ['trading', 'trade', 'market'],
-        'ai': ['ai', 'artificial intelligence', 'machine learning', 'ml'],
-        'python': ['python'],
-        'nextjs': ['next.js', 'nextjs', 'react'],
-        'api': ['api'],
-        'database': ['database', 'sql', 'postgres'],
-        'deployment': ['deploy', 'vercel', 'production'],
-        'bug-fix': ['bug', 'fix', 'error'],
-        'feature': ['feature', 'new'],
-    }
-    
-    for tag, keywords in tag_keywords.items():
-        if any(keyword in content_lower for keyword in keywords):
-            possible_tags.append(tag)
-    
-    if possible_tags:
-        tags = possible_tags[:3]  # Limit to 3 tags
-    
-    return title, tags, main_content
-
 def generate_blog_post(diff):
     """Call Claude API to generate a blog post based on the git diff."""
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         print("Error: ANTHROPIC_API_KEY environment variable not set")
         return None
-    
+
     client = Anthropic(api_key=api_key)
-    
-    system_prompt = """You are Luis Sandoval, a builder documenting your journey of building an AI-powered automated trading bot from scratch while simultaneously building a personal website to document the process.
 
-Write in first person with an authentic, learning-focused tone:
-- Be honest about mistakes and learning moments
-- Write for beginners who want to follow along
-- Explain WHY you made changes, not just WHAT changed
-- Keep it conversational and approachable
-- Share the thought process behind decisions
-- Mention when you used AI tools (like Claude or GitHub Copilot) to help
+    system_prompt = """You are writing blog posts for Luis Sandoval — a guy who works in operations and data at a tech hardware company and decided one day to just... build a trading bot. No CS degree. No developer background. Just curiosity, AI tools, and too much free time.
 
-Your background: You work in operations and data at a technology hardware company. You're teaching yourself Python, SQL, and development tools. You're not a traditional developer, but you're building anyway.
+Luis's voice is:
+- Casual and conversational — like he's texting a friend who happens to be interested in tech
+- Self-aware and funny about how ambitious/crazy his ideas are
+- Honest about struggles, mistakes, and "wait why did that work" moments
+- Genuinely excited — not fake hype, real enthusiasm from someone who can't believe this stuff is possible
+- Never talks down to readers — he IS the beginner, writing for other beginners
+- Drops in real context: he started with a soccer win/loss predictor, bet on Real Madrid vs Benfica, Benfica won, moved on
+- References the AI tools he uses casually: Claude, GitHub Copilot, Python, Alpaca, Vercel, GitHub Actions
+- Doesn't over-explain technical stuff — keeps it light, links the big ideas
+- Short paragraphs. No corporate speak. No "In conclusion." No "It's worth noting that."
 
-Based on the git diff provided, write a blog post that:
-1. Starts with a clear title (as an H1 heading with #)
-2. Explains what you built or changed
-3. Shares why you made these changes
-4. Mentions any challenges or learning moments
-5. Keeps it concise and scannable (300-600 words)
-6. Ends with a brief note about what's next
+Tone examples from Luis himself:
+- "I know how this sounds. Trust me. But hear me out."
+- "Then my brain did what it always does — how can we make this more complicated?"
+- "About four hours of 'coding' — heavily assisted by AI, let's be honest — and I enabled all of this."
+- "We'll see."
 
-Write ONLY the blog post content with the title as the first line. Do not include any frontmatter or metadata."""
+When writing a post:
+1. Start with a punchy title as H1
+2. Open with something human — a reaction, a realization, a problem
+3. Explain what changed and WHY in plain language
+4. Be honest if something broke or was confusing
+5. Keep it 300-500 words — scannable, not a wall of text
+6. End with what's next, kept short and real
+7. No motivational fluff. No "excited to share." Just the actual story.
 
-    user_prompt = f"""Here's the git diff from my latest commit. Write a blog post about what I changed and why:
+Write ONLY the blog post. No frontmatter. No metadata. Start with the # title."""
 
+    user_prompt = f"""Here's what changed in today's commit. Write a blog post about it in Luis's voice:
 ```diff
 {diff}
 ```
 
-Remember: Write as me (Luis), in first person, focused on the journey and learning."""
+Write it like Luis is telling a friend what he did today — honest, a little chaotic, genuinely excited. If something broke or was confusing, say so. Keep it real."""
 
     try:
         message = client.messages.create(
@@ -121,82 +73,60 @@ Remember: Write as me (Luis), in first person, focused on the journey and learni
                 {"role": "user", "content": user_prompt}
             ]
         )
-        
         return message.content[0].text
     except Exception as e:
         print(f"Error calling Claude API: {e}")
         return None
 
 def save_blog_post(content):
-    """Save the blog post as a markdown file with frontmatter."""
-    # Extract title, tags, and clean content
-    title, tags, main_content = extract_frontmatter(content)
-    
-    # Generate slug and filename
-    date = datetime.now()
-    date_str = date.strftime("%Y-%m-%d")
-    slug = create_slug(title)
-    filename = f"{date_str}-{slug}.md"
-    
-    # Create posts directory if it doesn't exist
-    posts_dir = "posts"
-    os.makedirs(posts_dir, exist_ok=True)
-    
-    filepath = os.path.join(posts_dir, filename)
-    
-    # Check if file already exists
-    if os.path.exists(filepath):
-        print(f"Blog post already exists: {filepath}")
-        return
-    
-    # Format tags for frontmatter
-    tags_str = ", ".join([f'"{tag}"' for tag in tags])
-    
-    # Create frontmatter
+    """Wrap the blog post in frontmatter and save it to the posts folder."""
+    today = datetime.utcnow()
+    date_str = today.strftime("%Y-%m-%d")
+    slug = f"update-{date_str}"
+
+    # Pull the first line (the # Title) out to use as the frontmatter title
+    lines = content.strip().splitlines()
+    title = lines[0].lstrip("#").strip() if lines else "Update"
+
     frontmatter = f"""---
 title: "{title}"
 date: "{date_str}"
 slug: "{slug}"
-tags: [{tags_str}]
+tags: ["trading-bot", "dev-log", "building-in-public"]
 ---
 
 """
-    
-    # Write the file
-    with open(filepath, 'w', encoding='utf-8') as f:
-        f.write(frontmatter + main_content)
-    
-    print(f"✅ Blog post created: {filepath}")
-    print(f"   Title: {title}")
-    print(f"   Tags: {', '.join(tags)}")
+    full_post = frontmatter + content
 
-def main():
-    print("🤖 Auto-generating blog post from latest commit...")
-    
-    # Get the git diff
-    diff = get_latest_commit_diff()
-    if not diff:
-        print("❌ No git diff found")
-        return
-    
-    # Skip if diff is too small (likely not meaningful changes)
-    if len(diff) < 50:
-        print("⏭️  Diff too small, skipping blog post generation")
-        return
-    
-    print(f"📝 Found diff with {len(diff)} characters")
-    
-    # Generate the blog post using Claude
-    print("🧠 Calling Claude API to generate blog post...")
-    blog_content = generate_blog_post(diff)
-    
-    if not blog_content:
-        print("❌ Failed to generate blog post")
-        return
-    
-    # Save the blog post
-    save_blog_post(blog_content)
-    print("✅ Done!")
+    # Make sure the posts folder exists
+    os.makedirs("posts", exist_ok=True)
+
+    filepath = f"posts/{slug}.md"
+    with open(filepath, "w") as f:
+        f.write(full_post)
+
+    print(f"Blog post saved to {filepath}")
+    return filepath
+
+# --- This is the main entry point ---
+# When GitHub Actions runs `python scripts/generate-blog-post.py`, it starts here
 
 if __name__ == "__main__":
-    main()
+    print("Getting git diff...")
+    diff = get_git_diff()
+
+    if not diff or diff.strip() == "":
+        print("No diff found — nothing to write about. Exiting.")
+        exit(0)
+
+    print("Calling Claude API...")
+    post_content = generate_blog_post(diff)
+
+    if not post_content:
+        print("Failed to generate blog post. Exiting.")
+        exit(1)
+
+    print("Saving blog post...")
+    save_blog_post(post_content)
+
+    print("Done!")
