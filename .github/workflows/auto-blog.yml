@@ -1,36 +1,50 @@
 name: Auto-Generate Blog Post
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 14 * * 1-5'
+
 jobs:
   generate-blog-post:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout auto-trader-bot
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Checkout personal-website
+        uses: actions/checkout@v4
+        with:
+          repository: R2D2Sand/personal-website
+          path: personal-website
           token: ${{ secrets.GH_TOKEN }}
+
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install anthropic
+
       - name: Generate blog post
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           python scripts/generate-blog-post.py
-      - name: Commit and push new blog post
+
+      - name: Commit and push to personal-website
         run: |
+          cd personal-website
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add posts/
           if git diff --staged --quiet; then
-            echo "No new blog post to commit"
+            echo "No changes to post today"
           else
-            git commit -m "Auto-generate blog post from latest changes"
+            git commit -m "Auto-generate SPY bot blog post"
             git push
           fi
