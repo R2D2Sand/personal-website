@@ -1,30 +1,34 @@
 ---
-title: "I'm Teaching My Bot to Write Better Blog Posts"
+title: "Making The Bot Write Its Own Blog Posts"
 date: "2026-03-12"
 slug: "spy-update-2026-03-12"
 tags: ["spy-trader", "dev-log", "building-in-public"]
 ---
 
-# I'm Teaching My Bot to Write Better Blog Posts
+# Making The Bot Write Its Own Blog Posts
 
-My changelog looked like garbage.
+## From Me
 
-Not the information — that was all there. But when Claude tried to turn those git commit messages into actual blog posts, it was like watching someone try to explain a movie they half-remember. "User modified file. Changes were made. Very technical."
+My Notes — [03/12/2026]
 
-So today I did something that felt very meta: I updated my instructions for writing changelogs... to make my AI write better blog posts about my changelogs.
+I've been working on some major strategy changes for this trading bot. I ended up doing a full SPY mean-reversion strategy research and backtesting report, covering things like position sizing, the execution model, execution audits, and filter testing.
 
-I added two simple lines to every entry now:
-- A plain English explanation of what actually happened
-- Why it matters (or doesn't)
+Honestly, I burned through all my AI tokens for the day working on it, but it feels like I came out with something solid. According to the models themselves, this is closer to a real strategy rather than just recycled common knowledge. I really pushed the machines hard on this one, even putting them against each other at one point and cross-checking ideas across three different tools.
 
-Before: `MODIFIED | .github/copilot-instructions.md | Updated changelog format`
+On the operational side, the system has been running without errors since 03/08/2026, collecting data and waiting for the right entry conditions. It's still in paper mode for now since there's no rush. I might leave it there for the rest of the month just to review performance and behavior.
 
-After: `MODIFIED | .github/copilot-instructions.md | Updated changelog format | Added plain English summaries to help AI write better blog posts | Makes the automated blogging actually readable`
+The broader market environment isn't exactly in a strong growth trend at the moment, so I'm mostly observing and letting the system gather data. But I'm hoping the market turns up soon so the strategy gets a proper opportunity to trigger and really be tested.
 
-It's like having a translator between my technical brain and normal human language. Because let's be honest — when I'm deep in the code at 11 PM, I write changelogs like "fixed the thing that was broken." Future me (and Claude) deserve better.
+Okay so I did something probably ridiculous today. You know how I've been manually writing these blog posts every time I update the bot? Well, my brain did what it always does — how can we make this more complicated?
 
-The funny part? I spent more time today thinking about how to document my work than actually doing new work. But that's probably smart. If I'm going to automate my blog posts, they should at least make sense to people who don't live inside my head.
+I taught the bot to write its own blog posts.
 
-This is one of those changes that seems tiny but might actually matter. Every entry now has context. Every commit explains itself. And maybe — just maybe — my automated blog posts will stop sounding like they were written by a very polite robot who doesn't quite understand what humans find interesting.
+Here's what happened: I was looking at my changelog format and realized it was already tracking everything I did. So why not just... feed that to Claude and have it generate a blog post in my voice? About four hours of "coding" — heavily assisted by GitHub Copilot, let's be honest — and now every time I push changes, a GitHub Action automatically generates a blog post draft.
 
-We'll see if it works tomorrow when Claude tries to turn "refactored data pipeline" into something my mom could follow.
+The tricky part was getting the voice right. I had to write these ridiculously detailed instructions about how I actually talk, complete with examples of my terrible jokes and self-aware commentary. Then I set up this whole pipeline where the changelog gets processed, combined with my manual notes, and turned into something that hopefully doesn't sound like corporate AI nonsense.
+
+I'm genuinely curious if you can tell this post was written by Claude. The plan is to still review and edit everything before it goes live, but having a solid first draft generated automatically? That's going to save me so much time.
+
+Plus there's something beautifully meta about a trading bot that writes blog posts about itself. We're getting close to full automation here, and I'm not sure if that's amazing or terrifying.
+
+We'll see if this actually works or if I just spent a day building an elaborate way to make my writing worse.
