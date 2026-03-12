@@ -1,11 +1,11 @@
 ---
-title: "Making The Bot Write Its Own Blog Posts"
+title: "Making the Blog Posts Less... Robot-y"
 date: "2026-03-12"
 slug: "spy-update-2026-03-12"
 tags: ["spy-trader", "dev-log", "building-in-public"]
 ---
 
-# Making The Bot Write Its Own Blog Posts
+# Making the Blog Posts Less... Robot-y
 
 ## From Me
 
@@ -19,16 +19,18 @@ On the operational side, the system has been running without errors since 03/08/
 
 The broader market environment isn't exactly in a strong growth trend at the moment, so I'm mostly observing and letting the system gather data. But I'm hoping the market turns up soon so the strategy gets a proper opportunity to trigger and really be tested.
 
-Okay so I did something probably ridiculous today. You know how I've been manually writing these blog posts every time I update the bot? Well, my brain did what it always does — how can we make this more complicated?
+---
 
-I taught the bot to write its own blog posts.
+You know what's weird about building stuff with AI? Sometimes the AI gets too... AI-ish. I was looking at the blog posts this system generates about code changes, and they sounded like they were written by a very polite robot who'd taken a creative writing class.
 
-Here's what happened: I was looking at my changelog format and realized it was already tracking everything I did. So why not just... feed that to Claude and have it generate a blog post in my voice? About four hours of "coding" — heavily assisted by GitHub Copilot, let's be honest — and now every time I push changes, a GitHub Action automatically generates a blog post draft.
+So today I spent time making the automated blog posts sound more like an actual human wrote them. Specifically, more like me — which means fewer corporate buzzwords and more "wait, why did that work?" energy.
 
-The tricky part was getting the voice right. I had to write these ridiculously detailed instructions about how I actually talk, complete with examples of my terrible jokes and self-aware commentary. Then I set up this whole pipeline where the changelog gets processed, combined with my manual notes, and turned into something that hopefully doesn't sound like corporate AI nonsense.
+The main issue was the prompt I was using to generate these posts. It was producing content that felt weirdly formal and stiff. Posts were using phrases like "beautifully meta" and "ridiculously exciting" — which honestly made me cringe a little. I don't talk like that. You probably don't either.
 
-I'm genuinely curious if you can tell this post was written by Claude. The plan is to still review and edit everything before it goes live, but having a solid first draft generated automatically? That's going to save me so much time.
+I updated the prompt to be more specific about voice and tone. No more trying too hard to be funny. No more ending posts with motivational fluff. Just tell the story of what changed and why, like you're explaining it to someone who cares but isn't going to judge you for the messy parts.
 
-Plus there's something beautifully meta about a trading bot that writes blog posts about itself. We're getting close to full automation here, and I'm not sure if that's amazing or terrifying.
+I also fixed how the system handles my personal notes. Before, it was treating them like a separate section instead of weaving them naturally into the narrative. Now it should feel more like one cohesive story instead of "here's the technical stuff, and oh by the way, here are some personal thoughts."
 
-We'll see if this actually works or if I just spent a day building an elaborate way to make my writing worse.
+The changelog format got a small update too — each entry now has a plain English summary alongside the technical details. Should make it easier for the AI to understand what actually happened instead of just parsing Git commit messages.
+
+It's one of those changes that's mostly invisible until it works. We'll see if the next few posts feel more human and less like they were optimized for engagement metrics.
