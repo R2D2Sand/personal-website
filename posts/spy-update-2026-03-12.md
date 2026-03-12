@@ -1,30 +1,22 @@
 ---
-title: "Making the Blog Posts Sound Less Like a Robot Wrote Them"
+title: "Making the Blog Actually Sound Like Me"
 date: "2026-03-12"
 slug: "spy-update-2026-03-12"
 tags: ["spy-trader", "dev-log", "building-in-public"]
 ---
 
-## From Me
+Spent way too much time today fixing something that should've been simple — making these automated blog posts not sound like ChatGPT wrote them.
 
-I've been working on some major strategy changes for this trading bot. I ended up doing a full SPY mean-reversion strategy research and backtesting report, covering things like position sizing, the execution model, execution audits, and filter testing.
+You know that corporate-y, overly excited tone that screams "I am an AI assistant and I am here to help you with your trading journey"? Yeah, that was happening. Every post was coming out with phrases like "beautifully meta" and "ridiculously complex" and ending with some motivational fluff about being "excited to share."
 
-Honestly, I burned through all my AI tokens for the day working on it, but it feels like I came out with something solid. According to the models themselves, this is closer to a real strategy rather than just recycled common knowledge. I really pushed the machines hard on this one, even putting them against each other at one point and cross-checking ideas across three different tools.
+The problem was in how I was feeding my personal notes to the blog generator. Instead of weaving them naturally into the story, it was literally creating a "From Me:" section and copying my raw notes word for word. Which defeats the whole point of having a human voice in the first place.
 
-On the operational side, the system has been running without errors since 03/08/2026, collecting data and waiting for the right entry conditions. It's still in paper mode for now since there's no rush. I might leave it there for the rest of the month just to review performance and behavior.
+So I spent the morning tweaking the prompt. Told it to dial back the jokes (apparently one self-aware comment per post is plenty), blend my notes invisibly into the narrative, and stop using those AI-sounding phrases that make everything read like a LinkedIn post.
 
-The broader market environment isn't exactly in a strong growth trend at the moment, so I'm mostly observing and letting the system gather data. But I'm hoping the market turns up soon so the strategy gets a proper opportunity to trigger and really be tested.
+The changelog format got some love too. Each entry now includes a plain English summary so the AI has better context about what actually changed. Before it was just trying to guess what "MODIFIED | scripts/generate-blog-post.py" meant for the story.
 
-Had one of those days where I spent more time fixing the thing that talks about the thing than actually working on the thing itself.
+Meanwhile, the actual trading bot keeps doing its thing. Still running clean since early March, collecting data and waiting for the right conditions. The SPY mean-reversion strategy I've been working on is sitting there patiently in paper mode while I watch the market do... whatever it's doing right now.
 
-You know how I've been letting GitHub automatically generate these blog posts from my changelog? Well, turns out having an AI write about what an AI-assisted human did creates this weird feedback loop where everything starts sounding way too... corporate.
+Part of me wants to rush into live trading, but there's something satisfying about taking time to get the details right. Both for the strategy and apparently for these blog posts.
 
-The posts were coming out with phrases like "beautifully meta" and "ridiculously excited" — stuff I would never actually say. Plus they kept duplicating the title and treating my personal notes like some formal section instead of just blending them in naturally.
-
-So I spent the morning tweaking the prompt. Told it to chill on the jokes, stop using AI-sounding buzzwords, and actually write like a human who codes with Copilot instead of a marketing department.
-
-Also updated the changelog format to include plain English summaries of each change. Turns out "MODIFIED | [REDACTED]" doesn't give the AI much to work with when trying to explain what actually happened.
-
-The whole automated blog pipeline is getting smoother. It's weird watching code write about code, but at least now it sounds more like me and less like ChatGPT had too much coffee.
-
-Next up: actually getting back to that strategy research instead of endlessly polishing the tools that document the tools.
+We'll see if this actually reads like a human wrote it now.
