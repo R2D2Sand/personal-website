@@ -1,0 +1,38 @@
+﻿name: Sync Pipeline Data
+
+on:
+  repository_dispatch:
+    types: [pipeline-export]
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout personal-website
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PIPELINE_DISPATCH_TOKEN }}
+
+      - name: Create data/pipeline directory
+        run: mkdir -p data/pipeline
+
+      - name: Fetch public.json from pipeline repo
+        run: |
+          curl -f \
+            -H "Authorization: token ${{ secrets.PIPELINE_DISPATCH_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3.raw" \
+            -o data/pipeline/public.json \
+            https://api.github.com/repos/R2D2Sand/the-quiet-before/contents/data/export/public.json
+
+      - name: Commit and push if changed
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add data/pipeline/public.json
+          if git diff --cached --quiet; then
+            echo "No changes to public.json. Skipping commit."
+          else
+            git commit -m "chore: sync pipeline data [skip ci]"
+            git push
+          fi
