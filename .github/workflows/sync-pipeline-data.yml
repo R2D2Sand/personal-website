@@ -18,12 +18,7 @@ jobs:
         run: mkdir -p data/pipeline
 
       - name: Fetch public.json from pipeline repo
-        run: |
-          curl -f \
--H "Authorization: token ${{ secrets.PIPELINE_DISPATCH_TOKEN }}" \
--H "Accept: application/vnd.github.v3.raw" \
-            -o data/pipeline/public.json \
-            https://api.github.com/repos/R2D2Sand/the-quiet-before/contents/data/export/public.json
+        run: curl -f -H "Authorization: token ${{ secrets.PIPELINE_DISPATCH_TOKEN }}" -H "Accept: application/vnd.github.v3.raw" -o data/pipeline/public.json https://api.github.com/repos/R2D2Sand/the-quiet-before/contents/data/export/public.json
 
       - name: Commit and push if changed
         run: |
