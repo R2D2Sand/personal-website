@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-31T20:52:58.396898+00:00",
+  "generated_at": "2026-03-31T21:52:31.234364+00:00",
   "pipeline_version": "1.4.0",
   "aggregate": {
     "total_signals": 37,
@@ -628,8 +628,8 @@
       "days_to_10pct": null,
       "days_to_20pct": null,
       "status": "ACTIVE",
-      "mode": "UNCLASSIFIED",
-      "trigger_label": "Emerging signal",
+      "mode": "SQUEEZE",
+      "trigger_label": "Short pressure building",
       "missed_vs_actionable": "ACTIONABLE",
       "disclaimer": "Discovery candidates for research purposes only. Not investment advice."
     },
