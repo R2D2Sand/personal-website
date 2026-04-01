@@ -69,7 +69,7 @@
       "days_to_peak": 0,
       "pct_gain_detection_to_peak": 0.0,
       "status": "ACTIVE",
-      "mode": "SQUEEZE",
+      "mode": "UNCLASSIFIED",
       "trigger_label": "A FEW THINGS LINING UP",
       "candidate_score": null,
       "opportunity_window_gain": null,
@@ -1095,6 +1095,6 @@
     ],
     "clustered_signals_present": false
   },
-  "generated_at": "2026-04-01T20:54:15.690966+00:00",
+  "generated_at": "2026-04-01T21:42:41.209500+00:00",
   "pipeline_version": "1.4.1"
 }
