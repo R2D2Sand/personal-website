@@ -1,320 +1,251 @@
-﻿import { getStatsData, Signal } from '@/lib/stats'
 import Link from 'next/link'
+import { AggregateStats, FeaturedSignalData, Signal, StatsData, fmt, getStatsData } from '@/lib/stats'
 
-// Extended Signal — adds fields present in newer pipeline versions
-type ExtendedSignal = Signal & {
-  current_price?: number | null
-  trigger_label?: string | null
-  days_active?: number | null
+const CARD_DISCLAIMER = 'Discovery candidates for research purposes only. Not investment advice.'
+
+function fmtInteger(value: number | null | undefined): string {
+  if (value == null) return '—'
+  return fmt(value).replace(/\.0$/, '')
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+function fmtPrice(value: number | null | undefined): string {
+  if (value == null) return '—'
+  return '$' + fmt(value)
+}
 
-function liveReturn(s: ExtendedSignal): number | null {
-  if (s.current_price != null && s.detection_price != null) {
-    return ((s.current_price - s.detection_price) / s.detection_price) * 100
+function fmtPercent(value: number | null | undefined): string {
+  if (value == null) return '—'
+  return fmt(value, '%')
+}
+
+function fmtDays(value: number | null | undefined): string {
+  if (value == null) return '—'
+  return fmtInteger(value) + 'd'
+}
+
+function fmtDate(value: string | null | undefined): string {
+  if (!value) return '—'
+  return value.slice(0, 10)
+}
+
+function statusText(status: Signal['status']): string {
+  if (status === 'ACTIVE') return 'Active'
+  if (status === 'RESOLVED') return 'Resolved'
+  if (status === 'EXITED') return 'Exited'
+  if (status === 'INVALIDATED') return 'Invalidated'
+  return status
+}
+
+function SignalStatusBadge({ label }: { label: Signal['signal_status_label'] }) {
+  if (!label) {
+    return (
+      <span className="rounded border border-[#1a1a1a] px-2 py-1 text-xs font-mono text-[#555]">
+        No status label
+      </span>
+    )
   }
-  return null
-}
 
-function fmtPrice(v: number | null | undefined): string {
-  if (v == null) return '—'
-  return '$' + v.toFixed(2)
-}
-
-function fmtGain(v: number | null | undefined): string {
-  if (v == null) return '—'
-  const prefix = v >= 0 ? '+' : ''
-  return prefix + v.toFixed(1) + '%'
-}
-
-function fmtDays(v: number | null | undefined): string {
-  if (v == null) return '—'
-  return Math.round(v) + 'd'
-}
-
-// Days ago relative to server render date, UTC-safe
-function daysAgo(detectionDate: string): string {
-  const now = new Date()
-  const nowUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  const [y, m, d] = detectionDate.split('-').map(Number)
-  const detectedUTC = Date.UTC(y, m - 1, d)
-  const diff = Math.round((nowUTC - detectedUTC) / 86_400_000)
-  if (diff <= 0) return 'today'
-  return `${diff} days ago`
-}
-
-// trigger_label takes priority; falls back to mode → plain English
-function signalLabel(s: ExtendedSignal): string {
-  if (s.trigger_label) return s.trigger_label
-  switch (s.mode) {
-    case 'SQUEEZE':      return 'Short pressure building'
-    case 'BREAKOUT':     return 'Unusual buying interest'
-    case 'TURNAROUND':   return 'Recovery setup forming'
-    case 'UNCLASSIFIED': return 'Emerging signal'
-    default:             return 'Signal detected'
-  }
-}
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function StatusText({ status }: { status: string }) {
-  if (status === 'ACTIVE') {
-    return <span className="text-[#00ff88] font-mono text-xs">Active</span>
-  }
-  if (status === 'RESOLVED') {
-    return <span className="text-[#555] font-mono text-xs">Resolved</span>
-  }
-  if (status === 'EXITED') {
-    return <span className="text-[#555] font-mono text-xs">Exited</span>
-  }
-  return <span className="text-[#555] font-mono text-xs">{status}</span>
-}
-
-function FeaturedCard({ signal, lr }: { signal: ExtendedSignal; lr: number | null }) {
-  const isActive = signal.status === 'ACTIVE'
-
-  let outcomeLine: string
-  if (!isActive) {
-    const entry = fmtPrice(signal.detection_price)
-    const peak  = fmtPrice(signal.peak_price)
-    const gain  = fmtGain(signal.pct_gain_detection_to_peak)
-    const days  = fmtDays(signal.days_to_peak)
-    outcomeLine = `${entry} → ${peak} (${gain}) in ${days}`
-  } else if (signal.current_price != null) {
-    const entry = fmtPrice(signal.detection_price)
-    const now   = fmtPrice(signal.current_price)
-    const gain  = lr != null ? fmtGain(lr) : '—'
-    outcomeLine = `${entry} detected → ${now} now (${gain} so far)`
-  } else {
-    outcomeLine = `${fmtPrice(signal.detection_price)} detected — tracking in progress`
-  }
+  let badgeClass = 'text-[#555]'
+  if (label === 'HOLDING') badgeClass = 'text-[#00ff88]'
+  if (label === 'DEGRADING') badgeClass = 'text-[#f5c451]'
+  if (label === 'BROKEN') badgeClass = 'text-[#ff5c5c]'
 
   return (
-    <div className="bg-[#111111] border border-[#1a1a1a] rounded p-8">
-      <div className="text-xs font-mono text-[#555] uppercase tracking-widest mb-4">
-        Featured Discovery
-      </div>
-      <div className="text-5xl font-mono font-bold mb-4 tracking-tight">
-        {signal.ticker}
-      </div>
-      <div className="text-[#ededed] font-mono text-lg mb-2">{outcomeLine}</div>
-      <div className="text-[#666] font-mono text-sm mb-1">
-        Detected {signal.detection_date} — {daysAgo(signal.detection_date)}
-      </div>
-      <div className="text-[#555] font-mono text-sm mb-4">{signalLabel(signal)}</div>
-      <StatusText status={signal.status} />
-      <div className="mt-6 pt-6 border-t border-[#1a1a1a]">
-        <p className="text-[#444] text-xs leading-relaxed">
-          Discovery candidates for research purposes only. Not investment advice.
-        </p>
-      </div>
-    </div>
+    <span className={'rounded border border-[#1a1a1a] px-2 py-1 text-xs font-mono ' + badgeClass}>
+      {label}
+    </span>
   )
 }
 
-function ActiveCard({ signal, lr }: { signal: ExtendedSignal; lr: number | null }) {
-  let priceLine: string
-  if (signal.current_price != null) {
-    const entry = fmtPrice(signal.detection_price)
-    const now   = fmtPrice(signal.current_price)
-    const gain  = lr != null ? fmtGain(lr) : '—'
-    priceLine = `${entry} → ${now} (${gain} so far)`
-  } else {
-    priceLine = `${fmtPrice(signal.detection_price)} detected — tracking in progress`
-  }
-
-  const daysActive = signal.days_active ?? null
-
+function CardDisclaimer() {
   return (
-    <div className="bg-[#111111] border border-[#1a1a1a] rounded p-6">
-      <div className="text-2xl font-mono font-bold mb-3">{signal.ticker}</div>
-      <div className="text-[#ededed] font-mono text-sm mb-2">{priceLine}</div>
-      <div className="text-[#666] font-mono text-xs mb-1">
-        Detected {daysAgo(signal.detection_date)}
-      </div>
-      {daysActive != null && (
-        <div className="text-[#555] font-mono text-xs mb-2">
-          Day {Math.round(daysActive)} — still developing
-        </div>
-      )}
-      <div className="text-[#555] font-mono text-xs mb-3">{signalLabel(signal)}</div>
-      <StatusText status={signal.status} />
-    </div>
+    <p className="mt-4 border-t border-[#1a1a1a] pt-3 text-xs font-mono leading-relaxed text-[#444]">
+      {CARD_DISCLAIMER}
+    </p>
   )
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="mb-4 text-xs font-mono uppercase tracking-[0.24em] text-[#555]">
+      {children}
+    </h2>
+  )
+}
 
 export default function StatsPage() {
-  const data = getStatsData()
-  const signals = data.signals as ExtendedSignal[]
+  let data: StatsData | null = null
+  let loadError: string | null = null
 
-  const resolvedExited = signals.filter(
-    (s) => s.status === 'RESOLVED' || s.status === 'EXITED'
-  )
-  const activeAll = signals.filter((s) => s.status === 'ACTIVE')
-
-  // Featured: best RESOLVED/EXITED by pct_gain, else best ACTIVE by liveReturn, else first
-  let featured: ExtendedSignal | null = null
-  if (resolvedExited.length > 0) {
-    featured = resolvedExited.reduce((best, s) => {
-      const bv = best.pct_gain_detection_to_peak ?? -Infinity
-      const sv = s.pct_gain_detection_to_peak ?? -Infinity
-      return sv > bv ? s : best
-    })
-  } else if (activeAll.length > 0) {
-    featured = activeAll.reduce((best, s) => {
-      const bv = liveReturn(best) ?? -Infinity
-      const sv = liveReturn(s) ?? -Infinity
-      return sv > bv ? s : best
-    })
-  } else if (signals.length > 0) {
-    featured = signals[0]
+  try {
+    data = getStatsData()
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : 'Unable to load local pipeline stats data.'
   }
 
-  const featuredKey = featured
-    ? `${featured.ticker}-${featured.detection_date}`
-    : null
+  if (!data || loadError) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] px-4 py-12 font-mono text-[#ededed]">
+        <div className="mx-auto max-w-6xl">
+          <Link href="/" className="mb-8 inline-block text-sm text-[#666] hover:text-[#ededed]">
+            ← Back
+          </Link>
+          <div className="rounded border border-[#1a1a1a] bg-[#111111] p-5 sm:p-6">
+            <h1 className="mb-3 text-2xl font-bold sm:text-3xl">Stats unavailable</h1>
+            <p className="text-sm text-[#999]">
+              Failed to load local pipeline export data from data/pipeline/public.json.
+            </p>
+            <p className="mt-3 text-sm text-[#ff5c5c]">{loadError ?? 'Unknown data error.'}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-  // Active signals excluding featured, sorted by liveReturn DESC then days_active DESC
-  const activeSignals = activeAll
-    .filter((s) => `${s.ticker}-${s.detection_date}` !== featuredKey)
-    .sort((a, b) => {
-      const ra = liveReturn(a) ?? -Infinity
-      const rb = liveReturn(b) ?? -Infinity
-      if (rb !== ra) return rb - ra
-      return (b.days_active ?? 0) - (a.days_active ?? 0)
-    })
-
-  const persistent  = activeSignals.filter((s) => (s.days_active ?? 0) >= 5)
-  const newThisWeek = activeSignals.filter((s) => (s.days_active ?? 0) < 5)
-
-  // Past discoveries: all RESOLVED + EXITED sorted by detection_date DESC
-  const past = [...resolvedExited].sort((a, b) =>
-    b.detection_date.localeCompare(a.detection_date)
-  )
+  const featuredData: FeaturedSignalData = data.featured_signal
+  const activeSignals: Signal[] = data.active_signals.slice(0, 5)
+  const pastSignals: Signal[] = data.past_signals
+  const signalLedger: Signal[] = data.signal_ledger
+  const stats: AggregateStats = data.stats
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#ededed] px-4 py-12">
-      <div className="max-w-6xl mx-auto">
-
-        <Link
-          href="/"
-          className="text-[#666] hover:text-[#ededed] mb-8 inline-block text-sm font-mono"
-        >
+    <div className="min-h-screen bg-[#0a0a0a] px-4 py-12 font-mono text-[#ededed]">
+      <div className="mx-auto max-w-6xl">
+        <Link href="/" className="mb-8 inline-block text-sm text-[#666] hover:text-[#ededed]">
           ← Back
         </Link>
 
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold mb-2">The Quiet Before</h1>
-          <p className="text-[#999] text-lg">
-            Small-cap discovery intelligence. Detecting the moment a stock
-            transitions from ignored to investable.
+        <header className="mb-10">
+          <h1 className="mb-2 text-3xl font-bold sm:text-4xl">The Quiet Before</h1>
+          <p className="text-sm text-[#999] sm:text-base">
+            Small-cap discovery intelligence from the local pipeline export.
           </p>
-        </div>
+        </header>
 
-        {/* Section 1 — Featured Signal */}
-        <section className="mb-16">
-          {featured ? (
-            <FeaturedCard signal={featured} lr={liveReturn(featured)} />
+        <section className="mb-12">
+          <SectionTitle>Featured Signal</SectionTitle>
+          {!featuredData.has_featured_signal || !featuredData.signal ? (
+            <div className="rounded border border-[#1a1a1a] bg-[#111111] p-5 text-sm text-[#666]">
+              No featured signal available in this export.
+            </div>
           ) : (
-            <p className="text-[#555] font-mono text-sm">
-              No featured signal available yet
-            </p>
+            <article className="rounded border border-[#1a1a1a] bg-[#111111] p-5 sm:p-6">
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="mb-2 text-xs uppercase tracking-[0.24em] text-[#555]">Featured</p>
+                  <h3 className="text-3xl font-bold">{featuredData.signal.ticker}</h3>
+                </div>
+                <SignalStatusBadge label={featuredData.signal.signal_status_label} />
+              </div>
+
+              <div className="space-y-2 text-sm text-[#999]">
+                <p>Trigger: {featuredData.signal.trigger_label ?? '—'}</p>
+                <p>Detected: {fmtDate(featuredData.signal.detection_date)}</p>
+                <p>Detection Price: {fmtPrice(featuredData.signal.detection_price)}</p>
+                <p>Current Price: {fmtPrice(featuredData.signal.current_price)}</p>
+                <p>
+                  Opportunity Window: {fmtPercent(featuredData.signal.opportunity_window_gain)} in{' '}
+                  {fmtDays(featuredData.signal.opportunity_window_days)}
+                </p>
+                <p className={featuredData.signal.return_pct != null && featuredData.signal.return_pct > 0 ? 'text-[#00ff88]' : 'text-[#999]'}>
+                  Return: {fmtPercent(featuredData.signal.return_pct)}
+                </p>
+              </div>
+
+              <CardDisclaimer />
+            </article>
           )}
         </section>
 
-        {/* Section 2 — Active Signals */}
-        {activeSignals.length > 0 && (
-          <section className="mb-16">
-            <h2 className="text-xs font-mono text-[#555] uppercase tracking-widest mb-8">
-              Active Signals
-            </h2>
-
-            {persistent.length > 0 && (
-              <div className="mb-10">
-                <h3 className="text-xs font-mono text-[#444] uppercase tracking-widest mb-4">
-                  Persistent
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {persistent.map((s) => (
-                    <ActiveCard
-                      key={`${s.ticker}-${s.detection_date}`}
-                      signal={s}
-                      lr={liveReturn(s)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {newThisWeek.length > 0 && (
-              <div>
-                <h3 className="text-xs font-mono text-[#444] uppercase tracking-widest mb-4">
-                  New This Week
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {newThisWeek.map((s) => (
-                    <ActiveCard
-                      key={`${s.ticker}-${s.detection_date}`}
-                      signal={s}
-                      lr={liveReturn(s)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Section 3 — Past Discoveries */}
-        <section className="mb-16">
-          <h2 className="text-xs font-mono text-[#555] uppercase tracking-widest mb-6">
-            Past Discoveries
-          </h2>
-          {past.length === 0 ? (
-            <p className="text-[#555] font-mono text-sm">No resolved signals yet</p>
+        <section className="mb-12">
+          <SectionTitle>Active Signals</SectionTitle>
+          {activeSignals.length === 0 ? (
+            <p className="text-sm text-[#666]">No active signals in this export.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm font-mono border-collapse">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {activeSignals.map((signal) => (
+                <article
+                  key={signal.ticker + '-' + signal.detection_date}
+                  className="rounded border border-[#1a1a1a] bg-[#111111] p-5"
+                >
+                  <div className="mb-3 flex items-start justify-between gap-2">
+                    <h3 className="text-2xl font-bold">{signal.ticker}</h3>
+                    <SignalStatusBadge label={signal.signal_status_label} />
+                  </div>
+
+                  <div className="space-y-1 text-sm text-[#999]">
+                    <p>Trigger: {signal.trigger_label ?? '—'}</p>
+                    <p>Detected: {fmtDate(signal.detection_date)}</p>
+                    <p>Detection Price: {fmtPrice(signal.detection_price)}</p>
+                    <p>Current Price: {fmtPrice(signal.current_price)}</p>
+                    <p>Days Active: {fmtDays(signal.days_active)}</p>
+                  </div>
+
+                  <CardDisclaimer />
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="mb-12">
+          <SectionTitle>Past Signals</SectionTitle>
+          {pastSignals.length === 0 ? (
+            <p className="text-sm text-[#666]">No past signals in this export.</p>
+          ) : (
+            <div className="space-y-3">
+              {pastSignals.map((signal) => (
+                <article
+                  key={signal.ticker + '-' + signal.detection_date + '-' + signal.status}
+                  className="rounded border border-[#1a1a1a] bg-[#111111] p-4"
+                >
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+                    <span className="font-bold text-[#ededed]">{signal.ticker}</span>
+                    <span className="text-[#666]">{statusText(signal.status)}</span>
+                  </div>
+                  <div className="space-y-1 text-xs text-[#999]">
+                    <p>Detected: {fmtDate(signal.detection_date)}</p>
+                    <p>Return: {fmtPercent(signal.return_pct)}</p>
+                    <p>Opportunity Window Days: {fmtDays(signal.opportunity_window_days)}</p>
+                  </div>
+                  <CardDisclaimer />
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="mb-12">
+          <SectionTitle>Signal Ledger</SectionTitle>
+          {signalLedger.length === 0 ? (
+            <p className="text-sm text-[#666]">No ledger records in this export.</p>
+          ) : (
+            <div className="overflow-x-auto rounded border border-[#1a1a1a] bg-[#111111]">
+              <table className="w-full min-w-[700px] border-collapse text-left text-sm">
                 <thead>
-                  <tr className="text-left text-[#444] text-xs">
-                    <th className="pb-3 pr-6 font-normal">Ticker</th>
-                    <th className="pb-3 pr-6 font-normal">Detected</th>
-                    <th className="pb-3 pr-6 font-normal">Entry</th>
-                    <th className="pb-3 pr-6 font-normal">Peak</th>
-                    <th className="pb-3 pr-6 font-normal">Gain</th>
-                    <th className="pb-3 pr-6 font-normal">Days</th>
-                    <th className="pb-3 font-normal">Status</th>
+                  <tr className="border-b border-[#1a1a1a] text-xs uppercase tracking-[0.16em] text-[#555]">
+                    <th className="px-3 py-3 font-normal">Ticker</th>
+                    <th className="px-3 py-3 font-normal">Status</th>
+                    <th className="px-3 py-3 font-normal">Detection Date</th>
+                    <th className="px-3 py-3 font-normal">Return</th>
+                    <th className="px-3 py-3 font-normal">Days Active</th>
+                    <th className="px-3 py-3 font-normal">Pipeline Version</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {past.map((s) => (
+                  {signalLedger.map((signal) => (
                     <tr
-                      key={`${s.ticker}-${s.detection_date}`}
-                      className="border-t border-[#1a1a1a]"
+                      key={signal.ticker + '-' + signal.detection_date + '-' + signal.status + '-' + signal.pipeline_version}
+                      className="border-b border-[#151515] text-[#999] last:border-b-0"
                     >
-                      <td className="py-3 pr-6 font-bold">{s.ticker}</td>
-                      <td className="py-3 pr-6 text-[#666]">{s.detection_date}</td>
-                      <td className="py-3 pr-6">{fmtPrice(s.detection_price)}</td>
-                      <td className="py-3 pr-6">{fmtPrice(s.peak_price)}</td>
-                      <td
-                        className={`py-3 pr-6 ${
-                          s.pct_gain_detection_to_peak != null &&
-                          s.pct_gain_detection_to_peak > 0
-                            ? 'text-[#00ff88]'
-                            : ''
-                        }`}
-                      >
-                        {fmtGain(s.pct_gain_detection_to_peak)}
+                      <td className="px-3 py-3 font-bold text-[#ededed]">{signal.ticker}</td>
+                      <td className="px-3 py-3">{statusText(signal.status)}</td>
+                      <td className="px-3 py-3">{fmtDate(signal.detection_date)}</td>
+                      <td className={signal.return_pct != null && signal.return_pct > 0 ? 'px-3 py-3 text-[#00ff88]' : 'px-3 py-3'}>
+                        {fmtPercent(signal.return_pct)}
                       </td>
-                      <td className="py-3 pr-6 text-[#666]">
-                        {fmtDays(s.days_to_peak)}
-                      </td>
-                      <td className="py-3">
-                        <StatusText status={s.status} />
-                      </td>
+                      <td className="px-3 py-3">{fmtDays(signal.days_active)}</td>
+                      <td className="px-3 py-3">{signal.pipeline_version}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -323,19 +254,60 @@ export default function StatsPage() {
           )}
         </section>
 
-        {/* Footer */}
-        <div className="border-t border-[#1a1a1a] pt-8">
-          <p className="text-[#555] font-mono text-sm mb-2">
-            {data.aggregate.total_signals} signals tracked
-          </p>
-          <p className="text-[#444] text-xs leading-relaxed max-w-2xl">
-            Signals are generated by an automated pipeline scanning U.S.
-            small-cap stocks for liquidity regime changes, catalyst events, and
-            supply pressure shifts. Detection does not constitute a buy signal
-            or investment advice.
-          </p>
-        </div>
+        <section className="mb-12">
+          <SectionTitle>Stats</SectionTitle>
+          <div className="mb-4 rounded border border-[#1a1a1a] bg-[#111111] p-5">
+            <p className="mb-1 text-xs uppercase tracking-[0.24em] text-[#555]">Confidence</p>
+            <p className="text-2xl font-bold text-[#00ff88]">{stats.confidence_label}</p>
+          </div>
 
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded border border-[#1a1a1a] bg-[#111111] p-4">
+              <p className="mb-1 text-xs uppercase tracking-[0.2em] text-[#555]">Signal Sample Size</p>
+              <p className="text-lg">{fmtInteger(stats.signal_sample_size)}</p>
+            </div>
+            <div className="rounded border border-[#1a1a1a] bg-[#111111] p-4">
+              <p className="mb-1 text-xs uppercase tracking-[0.2em] text-[#555]">Mean Return</p>
+              <p className="text-lg">{fmtPercent(stats.mean_return)}</p>
+            </div>
+            <div className="rounded border border-[#1a1a1a] bg-[#111111] p-4">
+              <p className="mb-1 text-xs uppercase tracking-[0.2em] text-[#555]">Median Return</p>
+              <p className="text-lg">{fmtPercent(stats.median_return)}</p>
+            </div>
+            <div className="rounded border border-[#1a1a1a] bg-[#111111] p-4">
+              <p className="mb-1 text-xs uppercase tracking-[0.2em] text-[#555]">Pct Reaching 20</p>
+              <p className="text-lg">{fmtPercent(stats.pct_reaching_20)}</p>
+            </div>
+            <div className="rounded border border-[#1a1a1a] bg-[#111111] p-4">
+              <p className="mb-1 text-xs uppercase tracking-[0.2em] text-[#555]">Pct Reaching 30</p>
+              <p className="text-lg">{fmtPercent(stats.pct_reaching_30)}</p>
+            </div>
+            <div className="rounded border border-[#1a1a1a] bg-[#111111] p-4">
+              <p className="mb-1 text-xs uppercase tracking-[0.2em] text-[#555]">Pct Reaching 50</p>
+              <p className="text-lg">{fmtPercent(stats.pct_reaching_50)}</p>
+            </div>
+            <div className="rounded border border-[#1a1a1a] bg-[#111111] p-4">
+              <p className="mb-1 text-xs uppercase tracking-[0.2em] text-[#555]">Avg Days To Peak</p>
+              <p className="text-lg">{fmtDays(stats.avg_days_to_peak)}</p>
+            </div>
+            <div className="rounded border border-[#1a1a1a] bg-[#111111] p-4 sm:col-span-2 lg:col-span-2">
+              <p className="mb-1 text-xs uppercase tracking-[0.2em] text-[#555]">Avg Time To Opportunity</p>
+              <p className="text-lg">{fmtDays(stats.avg_time_to_opportunity)}</p>
+            </div>
+          </div>
+
+          {(stats.outlier_disclosure || stats.batch_cohort_disclosure) && (
+            <div className="mt-4 space-y-2 text-xs text-[#666]">
+              {stats.outlier_disclosure && <p>Outlier disclosure: {stats.outlier_disclosure}</p>}
+              {stats.batch_cohort_disclosure && <p>Batch cohort disclosure: {stats.batch_cohort_disclosure}</p>}
+            </div>
+          )}
+        </section>
+
+        <footer className="border-t border-[#1a1a1a] pt-6 text-xs text-[#666]">
+          <p>Generated At: {data.generated_at}</p>
+          <p className="mt-1">Pipeline Version: {data.pipeline_version}</p>
+        </footer>
       </div>
     </div>
   )

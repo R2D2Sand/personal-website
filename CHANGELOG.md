@@ -13,3 +13,8 @@ Session: [2026-03-24]
 Session: [2026-03-25]
 [2026-03-25] | app/page.tsx | MODIFIED | Changed The Quiet Before nav link target from /stats to /the-quiet-before
 [2026-03-25] | .github/workflows/sync-pipeline-data.yml | FIXED | Removed trailing whitespace after curl line-continuation backslash in Authorization header line to prevent command breakage
+[2026-03-25] | .github/workflows/sync-pipeline-data.yml | FIXED | Replaced multiline curl in Fetch step with exact single-line command to resolve YAML/shell parsing issues
+
+Session: [2026-03-31]
+[2026-03-31] | lib/stats.ts | REBUILT | Replaced legacy aggregate/signals schema with featured_signal, active_signals, past_signals, signal_ledger, stats, generated_at, pipeline_version; added new Signal/FeaturedSignal/AggregateStats types; getStatsData() now validates required top-level keys and throws explicit missing-key errors
+[2026-03-31] | app/stats/page.tsx | REBUILT | Migrated /stats to new schema sources (featured_signal, active_signals, past_signals, signal_ledger, stats); replaced legacy gain/day fields with return_pct and opportunity_window_*; added active signal_status_label badges, signal ledger section, and expanded aggregate stats metrics while preserving dark mono mobile-first design and per-card disclaimer
