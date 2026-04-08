@@ -18,3 +18,13 @@ Session: [2026-03-25]
 Session: [2026-03-31]
 [2026-03-31] | lib/stats.ts | REBUILT | Replaced legacy aggregate/signals schema with featured_signal, active_signals, past_signals, signal_ledger, stats, generated_at, pipeline_version; added new Signal/FeaturedSignal/AggregateStats types; getStatsData() now validates required top-level keys and throws explicit missing-key errors
 [2026-03-31] | app/stats/page.tsx | REBUILT | Migrated /stats to new schema sources (featured_signal, active_signals, past_signals, signal_ledger, stats); replaced legacy gain/day fields with return_pct and opportunity_window_*; added active signal_status_label badges, signal ledger section, and expanded aggregate stats metrics while preserving dark mono mobile-first design and per-card disclaimer
+[2026-04-07 00:00] | PROMPT 3 of 5 / PHASE 2 lib/stats.ts, app/stats/page.tsx | MODIFIED | Claude: AggregateStats type missing new pipeline proof-strip fields and page lacked a top-level significance summary
+Copilot: added pct_positive, pct_reaching_5, median_days_to_peak, median_time_to_opportunity to AggregateStats and added a null-safe System Performance proof strip above Featured Signal
+Impact: page now leads with signal quality and distribution context before individual names
+[2026-04-07 00:00] | PROMPT 4 of 5 / PHASE 2 app/stats/page.tsx | MODIFIED | Claude: active signal cards showed status badge but no plain-English interpretation of signal behavior
+Copilot: added inline significance label below ticker row on active signal cards using priority-ordered rule against signal_status_label and pct_gain_detection_to_peak; null-safe; display only
+Impact: users can immediately read what a signal's current behavior means without interpreting raw status codes
+[2026-04-07 00:00] | lib/stats.ts, app/stats/page.tsx | MODIFIED | Added pct_gain_detection_to_peak to Signal type and removed active-card inline cast by reading signal.pct_gain_detection_to_peak directly
+[2026-04-07 00:00] | PROMPT 5 of 5 / PHASE 2 app/stats/page.tsx | MODIFIED | Claude: Past Signals and Signal Ledger sections overlapped in purpose and presented raw logs without enough interpretation
+Copilot: replaced both sections with a single Signal History section bucketed by outcome using signalLedger as the only source; bucket logic computed as pure local consts; null-safe; responsive historical rows
+Impact: historical signal performance is now readable at a glance and outcome distribution is clearer without duplicated sections

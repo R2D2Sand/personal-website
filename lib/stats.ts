@@ -12,6 +12,7 @@ export type Signal = {
   detection_price: number | null
   promotion_date: string | null
   peak_price: number | null
+  pct_gain_detection_to_peak: number | null
   return_pct: number | null
   days_active: number | null
   opportunity_window_gain: number | null
@@ -39,15 +40,19 @@ export type FeaturedSignalData = {
 
 export type AggregateStats = {
   signal_sample_size: number
+  pct_positive: number | null
   confidence_label: 'Low' | 'Moderate' | 'High'
   mean_return: number | null
   median_return: number | null
+  pct_reaching_5: number | null
   pct_reaching_10: number | null
   pct_reaching_20: number | null
   pct_reaching_30: number | null
   pct_reaching_50: number | null
   avg_days_to_peak: number | null
+  median_days_to_peak: number | null
   avg_time_to_opportunity: number | null
+  median_time_to_opportunity: number | null
   outlier_disclosure: string | null
   batch_cohort_disclosure: string | null
   pipeline_versions_in_sample: string[]
