@@ -28,3 +28,16 @@ Impact: users can immediately read what a signal's current behavior means withou
 [2026-04-07 00:00] | PROMPT 5 of 5 / PHASE 2 app/stats/page.tsx | MODIFIED | Claude: Past Signals and Signal Ledger sections overlapped in purpose and presented raw logs without enough interpretation
 Copilot: replaced both sections with a single Signal History section bucketed by outcome using signalLedger as the only source; bucket logic computed as pure local consts; null-safe; responsive historical rows
 Impact: historical signal performance is now readable at a glance and outcome distribution is clearer without duplicated sections
+
+Session: [2026-04-16]
+[2026-04-16] | app/the-quiet-before/page.tsx | CREATED | Added /the-quiet-before route by re-exporting stats page
+[2026-04-16] | app/stats/page.tsx | MODIFIED | Removed disclaimer from signal cards and rendered a single instance at page bottom
+[2026-04-17 00:18] | app/stats/page.tsx | MODIFIED | Added plain English descriptions under Invalidated and Exited status labels
+[2026-04-17 00:33] | app/the-quiet-before/page.tsx | CREATED | Created /the-quiet-before route as a re-export of the stats page component.
+Plain English: The Quiet Before engine now has its own URL at /the-quiet-before.
+
+[2026-04-17 00:33] | app/page.tsx | MODIFIED | Wrapped The Quiet Before homepage reference in a Link pointing to /the-quiet-before.
+Plain English: Clicking The Quiet Before on the homepage now navigates to the correct page.
+
+[2026-04-17 00:33] | app/stats/page.tsx | MODIFIED | Replaced pct_gain_detection_to_peak with return_pct in all Signal History filters and card render logic.
+Plain English: Signal History buckets now read the correct field name from public.json and will populate correctly.

@@ -41,6 +41,12 @@ function statusText(status: Signal['status']): string {
   return status
 }
 
+function statusDescription(status: Signal['status']): string | null {
+  if (status === 'INVALIDATED') return 'Signal conditions broke down before an opportunity developed.'
+  if (status === 'EXITED') return 'Signal ran its course — the opportunity window closed.'
+  return null
+}
+
 function SignalStatusBadge({ label }: { label: Signal['signal_status_label'] }) {
   if (!label) {
     return (
@@ -114,26 +120,26 @@ export default function StatsPage() {
   const stats: AggregateStats = data.stats
 
   const bigMovers = signalLedger.filter((signal) => {
-    const gain = signal.pct_gain_detection_to_peak
+    const gain = signal.return_pct
     return gain != null && gain >= 20
   })
 
   const solidMovers = signalLedger.filter((signal) => {
-    const gain = signal.pct_gain_detection_to_peak
+    const gain = signal.return_pct
     return gain != null && gain >= 5 && gain < 20
   })
 
   const smallNoise = signalLedger.filter((signal) => {
-    const gain = signal.pct_gain_detection_to_peak
+    const gain = signal.return_pct
     return gain != null && gain >= 0 && gain < 5
   })
 
   const failedSignals = signalLedger.filter((signal) => {
-    const gain = signal.pct_gain_detection_to_peak
+    const gain = signal.return_pct
     return gain != null && gain < 0
   })
 
-  const pendingOutcome = signalLedger.filter((signal) => signal.pct_gain_detection_to_peak == null)
+  const pendingOutcome = signalLedger.filter((signal) => signal.return_pct == null)
 
   const historyBuckets = [
     { name: 'Big Movers', items: bigMovers },
@@ -228,8 +234,6 @@ export default function StatsPage() {
                   Return: {fmtPercent(featuredData.signal.return_pct)}
                 </p>
               </div>
-
-              <CardDisclaimer />
             </article>
           )}
         </section>
@@ -280,8 +284,6 @@ export default function StatsPage() {
                         <p>Current Price: {fmtPrice(signal.current_price)}</p>
                         <p>Days Active: {fmtDays(signal.days_active)}</p>
                       </div>
-
-                      <CardDisclaimer />
                     </article>
                   )
                 })()
@@ -311,16 +313,21 @@ export default function StatsPage() {
                         >
                           <div className="flex flex-col gap-1 text-sm text-[#999] sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                             <span className="font-bold text-[#ededed]">{signal.ticker}</span>
-                            <span>{statusText(signal.status)}</span>
+                            <span className="flex flex-col">
+                              <span>{statusText(signal.status)}</span>
+                              {statusDescription(signal.status) && (
+                                <span className="text-xs text-[#999]">{statusDescription(signal.status)}</span>
+                              )}
+                            </span>
                             <span>{fmtDate(signal.detection_date)}</span>
                             <span
                               className={
-                                signal.pct_gain_detection_to_peak != null && signal.pct_gain_detection_to_peak > 0
+                                signal.return_pct != null && signal.return_pct > 0
                                   ? 'text-[#00ff88]'
                                   : undefined
                               }
                             >
-                              {fmtPercent(signal.pct_gain_detection_to_peak)}
+                              {fmtPercent(signal.return_pct)}
                             </span>
                             <span>{signal.pipeline_version}</span>
                           </div>
@@ -382,6 +389,8 @@ export default function StatsPage() {
             </div>
           )}
         </section>
+
+        <CardDisclaimer />
 
         <footer className="border-t border-[#1a1a1a] pt-6 text-xs text-[#666]">
           <p>Generated At: {data.generated_at}</p>
