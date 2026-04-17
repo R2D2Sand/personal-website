@@ -47,6 +47,43 @@ function statusDescription(status: Signal['status']): string | null {
   return null
 }
 
+type AiEvaluation = {
+  summary: string | null
+  lifecycle_stage: string | null
+  conviction_tier: string | null
+  conviction_direction: string | null
+  entry_determination: string | null
+  total_score: number | null
+  report_date: string | null
+  model_name: string | null
+}
+
+function getAiEvaluation(signal: unknown): AiEvaluation | null | undefined {
+  const candidate = signal as { ai_evaluation?: AiEvaluation | null } | null | undefined
+  return candidate?.ai_evaluation
+}
+
+function renderAiResearchNote(aiEvaluation: AiEvaluation | null | undefined) {
+  if (aiEvaluation == null) return null
+
+  return (
+    <details className="mt-4 border-t border-[#1a1a1a] pt-3">
+      <summary className="cursor-pointer text-sm text-[#999]">AI Research Note</summary>
+      <div className="mt-3 space-y-1 text-sm text-[#999]">
+        <p className="text-base font-bold text-[#ededed]">{fmtText(aiEvaluation.summary)}</p>
+        <p>lifecycle_stage: {fmtText(aiEvaluation.lifecycle_stage)}</p>
+        <p>conviction_tier: {fmtText(aiEvaluation.conviction_tier)}</p>
+        <p>conviction_direction: {fmtText(aiEvaluation.conviction_direction)}</p>
+        <p>entry_determination: {fmtText(aiEvaluation.entry_determination)}</p>
+        <p>total_score: {aiEvaluation.total_score ?? '—'}</p>
+        <p className="text-xs text-[#666]">As of {fmtDate(aiEvaluation.report_date)}</p>
+        <p className="text-xs text-[#666]">{fmtText(aiEvaluation.model_name)}</p>
+        <p className="text-xs text-[#666]">AI-assisted research note. Not investment advice. Not pipeline output.</p>
+      </div>
+    </details>
+  )
+}
+
 function SignalStatusBadge({ label }: { label: Signal['signal_status_label'] }) {
   if (!label) {
     return (
@@ -234,6 +271,8 @@ export default function StatsPage() {
                   Return: {fmtPercent(featuredData.signal.return_pct)}
                 </p>
               </div>
+
+              {renderAiResearchNote(getAiEvaluation(featuredData.signal))}
             </article>
           )}
         </section>
@@ -284,6 +323,8 @@ export default function StatsPage() {
                         <p>Current Price: {fmtPrice(signal.current_price)}</p>
                         <p>Days Active: {fmtDays(signal.days_active)}</p>
                       </div>
+
+                      {renderAiResearchNote(getAiEvaluation(signal))}
                     </article>
                   )
                 })()
@@ -331,6 +372,8 @@ export default function StatsPage() {
                             </span>
                             <span>{signal.pipeline_version}</span>
                           </div>
+
+                          {renderAiResearchNote(getAiEvaluation(signal))}
                         </div>
                       ))}
                     </div>

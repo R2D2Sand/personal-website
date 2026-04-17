@@ -41,3 +41,4 @@ Plain English: Clicking The Quiet Before on the homepage now navigates to the co
 
 [2026-04-17 00:33] | app/stats/page.tsx | MODIFIED | Replaced pct_gain_detection_to_peak with return_pct in all Signal History filters and card render logic.
 Plain English: Signal History buckets now read the correct field name from public.json and will populate correctly.
+[2026-04-17 01:21] | app/stats/page.tsx | MODIFIED | Added collapsible AI Research Note section to signal cards using ai_evaluation data
