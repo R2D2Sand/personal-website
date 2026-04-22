@@ -12,17 +12,20 @@ const discoverySystem = {
 
 const executionSystems = [
   {
-    name: "HYDRA",
+    name: "PRISM",
     description:
-      "Multi-strategy crypto engine using dynamic routing across market conditions",
-    status: "Active",
-    image: "/images/hydra.PNG",
+      "Spec-locked crypto trading bot running on paper mode. Closed-candle system with strict risk gates, veto checks, and state-machine controls. Built to collect high-quality evidence before any real-money deployment.",
+    status: "Live Testing",
+    image: null,
+    href: "/prism",
   },
   {
-    name: "TIDE",
-    description: "Trend-following system entering disciplined pullbacks in SPY",
+    name: "RECLAIM",
+    description:
+      "Rule-based market pattern detection engine. Identifies liquidity sweeps, reclaim or MSS confirmation, and fair value gaps — then scores and persists every setup. Detection and validation engine, not yet an execution system.",
     status: "Paper",
     image: null,
+    href: "/reclaim",
   },
   {
     name: "AXIS",
@@ -30,13 +33,16 @@ const executionSystems = [
       "Adaptive crypto system selecting and executing the highest-probability setups",
     status: "Paper",
     image: null,
+    href: null,
   },
 ] as const;
 
-function StatusBadge({ status }: { status: "Active" | "Paper" }) {
+function StatusBadge({ status }: { status: "Active" | "Live Testing" | "Paper" }) {
   const badgeClass =
-    status === "Active"
-      ? "border border-emerald-500/30 bg-emerald-500/12 text-emerald-300"
+    status === "Live Testing"
+      ? "border border-yellow-500/70 bg-yellow-500 text-black"
+      : status === "Active"
+        ? "border border-emerald-500/30 bg-emerald-500/12 text-emerald-300"
       : "border border-amber-500/30 bg-amber-500/12 text-amber-300";
 
   return (
@@ -77,9 +83,6 @@ export default function Home() {
               <Link href="/about" className="transition hover:text-white">
                 Behind the Bots
               </Link>
-              <Link href="/the-quiet-before" className="transition hover:text-white">
-                The Quiet Before
-              </Link>
             </div>
           </nav>
 
@@ -102,7 +105,10 @@ export default function Home() {
               Discovery Engine
             </p>
 
-            <article className="grid overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] md:grid-cols-[1.25fr_0.9fr]">
+            <Link
+              href="https://www.aibitsandbots.com/the-quiet-before"
+              className="grid cursor-pointer overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] transition duration-200 hover:scale-[1.01] hover:border-white/25 md:grid-cols-[1.25fr_0.9fr]"
+            >
               <div className="flex min-h-[320px] flex-col justify-between gap-8 p-8 sm:p-10">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-3">
@@ -130,7 +136,7 @@ export default function Home() {
                   sizes="(min-width: 768px) 35vw, 100vw"
                 />
               </div>
-            </article>
+            </Link>
           </div>
 
           <div className="flex flex-col gap-5">
@@ -139,41 +145,61 @@ export default function Home() {
             </p>
 
             <div className="grid gap-5 lg:grid-cols-3">
-              {executionSystems.map((system) => (
-                <article
-                  key={system.name}
-                  className="flex min-h-[280px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03]"
-                >
-                  {system.image ? (
-                    <div className="relative h-44 border-b border-white/10 bg-zinc-900/80">
-                      <Image
-                        src={system.image}
-                        alt={system.name}
-                        fill
-                        className="object-cover"
-                        sizes="(min-width: 1024px) 22vw, (min-width: 640px) 45vw, 100vw"
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-44 border-b border-white/10 bg-zinc-900/80" />
-                  )}
-
-                  <div className="flex flex-1 flex-col justify-between gap-8 p-6">
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <h3 className="text-2xl font-semibold tracking-tight text-white">
-                          {system.name}
-                        </h3>
-                        <StatusBadge status={system.status} />
+              {executionSystems.map((system) => {
+                const content = (
+                  <>
+                    {system.image ? (
+                      <div className="relative h-44 border-b border-white/10 bg-zinc-900/80">
+                        <Image
+                          src={system.image}
+                          alt={system.name}
+                          fill
+                          className="object-cover"
+                          sizes="(min-width: 1024px) 22vw, (min-width: 640px) 45vw, 100vw"
+                        />
                       </div>
+                    ) : (
+                      <div className="h-44 border-b border-white/10 bg-zinc-900/80" />
+                    )}
 
-                      <p className="text-sm leading-7 text-zinc-300">
-                        {system.description}
-                      </p>
+                    <div className="flex flex-1 flex-col justify-between gap-8 p-6">
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <h3 className="text-2xl font-semibold tracking-tight text-white">
+                            {system.name}
+                          </h3>
+                          <StatusBadge status={system.status} />
+                        </div>
+
+                        <p className="text-sm leading-7 text-zinc-300">
+                          {system.description}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              ))}
+                  </>
+                );
+
+                if (system.href) {
+                  return (
+                    <Link
+                      key={system.name}
+                      href={system.href}
+                      className="flex min-h-[280px] cursor-pointer flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] transition duration-200 hover:scale-[1.01] hover:border-white/25"
+                    >
+                      {content}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <article
+                    key={system.name}
+                    className="flex min-h-[280px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03]"
+                  >
+                    {content}
+                  </article>
+                );
+              })}
             </div>
           </div>
         </section>

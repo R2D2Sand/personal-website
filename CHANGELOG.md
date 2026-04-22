@@ -42,3 +42,17 @@ Plain English: Clicking The Quiet Before on the homepage now navigates to the co
 [2026-04-17 00:33] | app/stats/page.tsx | MODIFIED | Replaced pct_gain_detection_to_peak with return_pct in all Signal History filters and card render logic.
 Plain English: Signal History buckets now read the correct field name from public.json and will populate correctly.
 [2026-04-17 01:21] | app/stats/page.tsx | MODIFIED | Added collapsible AI Research Note section to signal cards using ai_evaluation data
+
+Session: 2026-04-21
+------------------
+[2026-04-21 22:40] | app/page.tsx | MODIFIED | Made The Quiet Before card clickable, removed nav link, replaced HYDRA and TIDE with PRISM and RECLAIM cards in Execution Systems grid
+	💬 Plain English: The homepage now links to the Quiet Before page, hides the retired bots, and shows the two new active projects.
+
+[2026-04-21 22:40] | app/prism/page.tsx | CREATED | New public page for PRISM with project summary and contact link
+	💬 Plain English: Visitors can now read what PRISM is and reach out via email.
+
+[2026-04-21 22:40] | app/reclaim/page.tsx | CREATED | New public page for RECLAIM with project summary and contact link
+	💬 Plain English: Visitors can now read what RECLAIM is and reach out via email.
+
+[2026-04-21 22:40] | app/stats/page.tsx | MODIFIED | Removed featured signal card, split signal display into AI Evaluated and non-AI-evaluated sections
+	💬 Plain English: The stats page now separates tickers that have been AI-reviewed from those that have not, instead of highlighting one as featured.

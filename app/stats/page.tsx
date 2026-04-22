@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { AggregateStats, FeaturedSignalData, Signal, StatsData, fmt, getStatsData } from '@/lib/stats'
+import { AggregateStats, Signal, StatsData, fmt, getStatsData } from '@/lib/stats'
 
 const CARD_DISCLAIMER = 'Discovery candidates for research purposes only. Not investment advice.'
 
@@ -121,6 +121,51 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   )
 }
 
+function renderSignalCard(signal: Signal) {
+  const pctGainDetectionToPeak = signal.pct_gain_detection_to_peak
+
+  const significanceLabel =
+    signal.signal_status_label === 'BROKEN'
+      ? 'Weak follow-through'
+      : signal.signal_status_label === 'DEGRADING' &&
+          pctGainDetectionToPeak != null &&
+          pctGainDetectionToPeak > 0
+        ? 'Stalling'
+        : signal.signal_status_label === 'DEGRADING'
+          ? 'Needs confirmation'
+          : signal.signal_status_label === 'HOLDING' &&
+              pctGainDetectionToPeak != null &&
+              pctGainDetectionToPeak >= 10
+            ? 'Early strength'
+            : signal.signal_status_label === 'HOLDING'
+              ? 'Holding — watching'
+              : null
+
+  return (
+    <article
+      key={signal.ticker + '-' + signal.detection_date + '-' + signal.status + '-' + signal.pipeline_version}
+      className="rounded border border-[#1a1a1a] bg-[#111111] p-5"
+    >
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <h3 className="text-2xl font-bold">{signal.ticker}</h3>
+        <SignalStatusBadge label={signal.signal_status_label} />
+      </div>
+
+      {significanceLabel && <p className="mb-3 text-sm text-[#999]">{significanceLabel}</p>}
+
+      <div className="space-y-1 text-sm text-[#999]">
+        <p>Trigger: {signal.trigger_label ?? '—'}</p>
+        <p>Detected: {fmtDate(signal.detection_date)}</p>
+        <p>Detection Price: {fmtPrice(signal.detection_price)}</p>
+        <p>Current Price: {fmtPrice(signal.current_price)}</p>
+        <p>Days Active: {fmtDays(signal.days_active)}</p>
+      </div>
+
+      {renderAiResearchNote(getAiEvaluation(signal))}
+    </article>
+  )
+}
+
 export default function StatsPage() {
   let data: StatsData | null = null
   let loadError: string | null = null
@@ -150,11 +195,14 @@ export default function StatsPage() {
     )
   }
 
-  const featuredData: FeaturedSignalData = data.featured_signal
   const activeSignals: Signal[] = data.active_signals.slice(0, 5)
   const pastSignals: Signal[] = data.past_signals
   const signalLedger: Signal[] = data.signal_ledger
   const stats: AggregateStats = data.stats
+
+  const signalCardsSource: Signal[] = [...activeSignals, ...pastSignals]
+  const aiEvaluatedSignals: Signal[] = signalCardsSource.filter((signal) => getAiEvaluation(signal) != null)
+  const regularSignals: Signal[] = signalCardsSource.filter((signal) => getAiEvaluation(signal) == null)
 
   const bigMovers = signalLedger.filter((signal) => {
     const gain = signal.return_pct
@@ -243,92 +291,23 @@ export default function StatsPage() {
         </section>
 
         <section className="mb-12">
-          <SectionTitle>Featured Signal</SectionTitle>
-          {!featuredData.has_featured_signal || !featuredData.signal ? (
-            <div className="rounded border border-[#1a1a1a] bg-[#111111] p-5 text-sm text-[#666]">
-              No featured signal available in this export.
-            </div>
+          <SectionTitle>AI Evaluated Signals</SectionTitle>
+          {aiEvaluatedSignals.length === 0 ? (
+            <p className="text-sm text-[#666]">No AI evaluated signals in this export.</p>
           ) : (
-            <article className="rounded border border-[#1a1a1a] bg-[#111111] p-5 sm:p-6">
-              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="mb-2 text-xs uppercase tracking-[0.24em] text-[#555]">Featured</p>
-                  <h3 className="text-3xl font-bold">{featuredData.signal.ticker}</h3>
-                </div>
-                <SignalStatusBadge label={featuredData.signal.signal_status_label} />
-              </div>
-
-              <div className="space-y-2 text-sm text-[#999]">
-                <p>Trigger: {featuredData.signal.trigger_label ?? '—'}</p>
-                <p>Detected: {fmtDate(featuredData.signal.detection_date)}</p>
-                <p>Detection Price: {fmtPrice(featuredData.signal.detection_price)}</p>
-                <p>Current Price: {fmtPrice(featuredData.signal.current_price)}</p>
-                <p>
-                  Opportunity Window: {fmtPercent(featuredData.signal.opportunity_window_gain)} in{' '}
-                  {fmtDays(featuredData.signal.opportunity_window_days)}
-                </p>
-                <p className={featuredData.signal.return_pct != null && featuredData.signal.return_pct > 0 ? 'text-[#00ff88]' : 'text-[#999]'}>
-                  Return: {fmtPercent(featuredData.signal.return_pct)}
-                </p>
-              </div>
-
-              {renderAiResearchNote(getAiEvaluation(featuredData.signal))}
-            </article>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {aiEvaluatedSignals.map(renderSignalCard)}
+            </div>
           )}
         </section>
 
         <section className="mb-12">
-          <SectionTitle>Active Signals</SectionTitle>
-          {activeSignals.length === 0 ? (
-            <p className="text-sm text-[#666]">No active signals in this export.</p>
+          <SectionTitle>Signals</SectionTitle>
+          {regularSignals.length === 0 ? (
+            <p className="text-sm text-[#666]">No non-AI signals in this export.</p>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {activeSignals.map((signal) => (
-                (() => {
-                  const pctGainDetectionToPeak = signal.pct_gain_detection_to_peak
-
-                  const significanceLabel =
-                    signal.signal_status_label === 'BROKEN'
-                      ? 'Weak follow-through'
-                      : signal.signal_status_label === 'DEGRADING' &&
-                          pctGainDetectionToPeak != null &&
-                          pctGainDetectionToPeak > 0
-                        ? 'Stalling'
-                        : signal.signal_status_label === 'DEGRADING'
-                          ? 'Needs confirmation'
-                          : signal.signal_status_label === 'HOLDING' &&
-                              pctGainDetectionToPeak != null &&
-                              pctGainDetectionToPeak >= 10
-                            ? 'Early strength'
-                            : signal.signal_status_label === 'HOLDING'
-                              ? 'Holding — watching'
-                              : null
-
-                  return (
-                    <article
-                      key={signal.ticker + '-' + signal.detection_date}
-                      className="rounded border border-[#1a1a1a] bg-[#111111] p-5"
-                    >
-                      <div className="mb-3 flex items-start justify-between gap-2">
-                        <h3 className="text-2xl font-bold">{signal.ticker}</h3>
-                        <SignalStatusBadge label={signal.signal_status_label} />
-                      </div>
-
-                      {significanceLabel && <p className="mb-3 text-sm text-[#999]">{significanceLabel}</p>}
-
-                      <div className="space-y-1 text-sm text-[#999]">
-                        <p>Trigger: {signal.trigger_label ?? '—'}</p>
-                        <p>Detected: {fmtDate(signal.detection_date)}</p>
-                        <p>Detection Price: {fmtPrice(signal.detection_price)}</p>
-                        <p>Current Price: {fmtPrice(signal.current_price)}</p>
-                        <p>Days Active: {fmtDays(signal.days_active)}</p>
-                      </div>
-
-                      {renderAiResearchNote(getAiEvaluation(signal))}
-                    </article>
-                  )
-                })()
-              ))}
+              {regularSignals.map(renderSignalCard)}
             </div>
           )}
         </section>
