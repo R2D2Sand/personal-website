@@ -46,7 +46,7 @@
       "days_to_peak": 3,
       "pct_gain_detection_to_peak": 2.759346624815586,
       "status": "ACTIVE",
-      "mode": "SQUEEZE",
+      "mode": "UNCLASSIFIED",
       "trigger_label": "A FEW THINGS LINING UP",
       "candidate_score": 41.7252,
       "opportunity_window_gain": null,
@@ -106,7 +106,7 @@
       "days_to_peak": 0,
       "pct_gain_detection_to_peak": 9.102248973021341,
       "status": "ACTIVE",
-      "mode": "SQUEEZE",
+      "mode": "UNCLASSIFIED",
       "trigger_label": "A FEW THINGS LINING UP",
       "candidate_score": 37.8624,
       "opportunity_window_gain": 9.102248973021341,
@@ -2144,6 +2144,6 @@
     ],
     "clustered_signals_present": false
   },
-  "generated_at": "2026-04-27T20:50:22.207051+00:00",
+  "generated_at": "2026-04-27T21:49:56.967992+00:00",
   "pipeline_version": "1.4.1"
 }
